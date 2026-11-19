@@ -1,25 +1,20 @@
-# Leonida Ledger — GTA VI Trophy Guide & Tracker
+# Vice Atlas — GTA VI Trophy Guide & Tracker
 
 [![make.fun](https://make.fun/badge/gta6-trophy-guide-01.svg)](https://make.fun/c/gta6-trophy-guide-01)
 [![rank](https://make.fun/badge/gta6-trophy-guide-01/dikrimuhammad291-ship-it/gta6-trophy-guide/rank.svg)](https://make.fun/c/gta6-trophy-guide-01)
 [![reward](https://make.fun/badge/gta6-trophy-guide-01/dikrimuhammad291-ship-it/gta6-trophy-guide/reward.svg)](https://make.fun/c/gta6-trophy-guide-01)
 
-An offline web app that is the guide and tracker for all 55 PlayStation 5 trophies
-of Grand Theft Auto VI: 1 platinum, 2 gold, 6 silver and 46 bronze.
+Entry for [Build the best GTA 6 trophy guide](https://make.fun/c/gta6-trophy-guide-01) on make.fun: an offline web app that guides and tracks all 55 Grand Theft Auto VI PlayStation 5 trophies — 1 platinum, 2 gold, 6 silver, 46 bronze.
 
-- **Tracker** — every trophy with its official name, description and grade; a
-  checklist saved in the browser (localStorage) with export and import; filters
-  by kind, grade and status; a search; and a spoiler-free setting that hides
-  story trophies until they are earned.
-- **Roadmap to the platinum** — the 55 trophies in four stages, built from the
-  official descriptions, with per-stage progress.
-- **Missables** — the 14 trophies that need a specific moment, setup or choice,
-  flagged with what to watch for.
-- **A cited guide to each trophy** — written for this entry in its own words
-  from the official descriptions. Names, descriptions, grades and hidden flags
-  follow the official list as published by Exophase and PSNProfiles on
-  18 November 2026; where a description does not pin a place or step down, the
-  guide says so. No Rockstar Games logo, artwork or game screenshot is used.
+## What it does
+
+- **Tracker** over every official trophy with its name, description and grade: a checklist saved in the browser (localStorage), with export to a file and import back.
+- **Filters** by kind (story, mission, side strand, collectible, activity, combat, misc, platinum), grade and status, plus search.
+- **Spoiler-free setting** that hides the names and descriptions of story trophies until they are earned.
+- **Roadmap to the platinum** in four stages with per-stage progress, and **14 missable trophies flagged** with what to watch for.
+- **A guide to each trophy in our own words**, built from the official descriptions, with its sources named beside it (Exophase for the official list, PSNProfiles for grades and PSN counts, and our own advice where the description leaves the how-to open).
+
+No Rockstar logo or official artwork. Fully offline: static files, no build step, no network request at run time.
 
 ## Run it
 
@@ -27,9 +22,15 @@ of Grand Theft Auto VI: 1 platinum, 2 gold, 6 silver and 46 bronze.
 node serve.ts
 ```
 
-Then open http://localhost:8080. The guide is plain static files under `app/`
-with no build step, and it works with the network off: it loads only its own
-files and makes no network request at run time.
+Then open http://localhost:8080.
+
+## Screenshots
+
+```sh
+node shots.mjs
+```
+
+Takes the 4 screenshots in `screenshots/` with headless Chromium (Playwright), and smoke-checks the guide: 55 rows render, the checklist persists across a reload, the filters and spoiler setting work, and export/import round-trip.
 
 ## Hand it in
 
@@ -37,22 +38,4 @@ files and makes no network request at run time.
 mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 ```
 
-`main.ts` copies `app/` and `screenshots/` to the output directory and writes
-`dossier.json` with the vendored make.fun library.
-
-## Layout
-
-- `app/index.html` — the shell: header and progress, tabs, filters, checklist
-  and guide detail pane.
-- `app/style.css` — the look: one dark Vice City night theme, system fonts only.
-- `app/js/main.js` — boot, state and view switching.
-- `app/js/store.js` — saved progress (localStorage), export and import.
-- `app/js/filters.js` — kind/grade/status/search filtering and the spoiler rule.
-- `app/js/views.js` — the checklist, guide detail, roadmap and missables views.
-- `app/data/trophies.json` — the official 55 trophies, each with its guide,
-  sources, kind, missable flag, PSN count and roadmap stage.
-- `screenshots/` — 3–4 real browser renders of the guide (see `shots.json`).
-
-## License
-
-MIT — see `LICENSE`.
+`main.ts` copies `app/` and `screenshots/` to the output directory and writes `dossier.json` with the vendored `buildDossier` library.

@@ -1,109 +1,94 @@
-// Leonida Ledger — boot. Loads the trophy data, restores the reader's saved
-// progress, and wires the tracker, roadmap and missables views together.
+// Vice Atlas — boot: load the trophy data, restore saved progress, wire the
+// toolbar and tabs, and re-render on every change. The app fetches one file of
+// its own, data/trophies.json, and makes no other request at run time.
+import { loadEarned, saveEarned, loadSpoilerFree, saveSpoilerFree, exportProgress, importProgress } from './store.js';
+import { render } from './render.js';
 
-import { applyFilters } from './filters.js';
-import { exportProgressFile, importProgressFile, loadProgress, saveProgress, toggleEarned } from './store.js';
-import { renderChecklist, renderGuideDetail, renderMissables, renderProgress, renderRoadmap } from './views.js';
+const state = {
+  data: null,
+  earned: loadEarned(),
+  view: 'tracker',
+  search: '',
+  kind: 'all',
+  grade: 'all',
+  status: 'all',
+  spoilerFree: loadSpoilerFree(),
+  selectedId: null,
+};
 
-// The trophy the detail pane opens on first: a silver with a counted target,
-// a full guide and its sources beside it.
-const DEFAULT_SELECTED_ID = 17;
-
-const doc = await (await fetch('data/trophies.json')).json();
-const state = loadProgress();
-const validIds = new Set(doc.trophies.map((trophy) => trophy.id));
-let selectedId = doc.trophies.some((trophy) => trophy.id === DEFAULT_SELECTED_ID) ? DEFAULT_SELECTED_ID : doc.trophies[0].id;
-let view = 'tracker';
-
-const filters = { query: '', kind: 'all', grade: 'all', status: 'all' };
-
-function selectedTrophy() {
-  return doc.trophies.find((trophy) => trophy.id === selectedId) ?? null;
-}
-
-function renderAll() {
-  renderProgress(doc, state);
-  const visible = applyFilters(doc.trophies, filters, state.earned);
-  renderChecklist(doc, visible, state, selectedId, callbacks);
-  renderGuideDetail(doc, selectedTrophy(), state, callbacks);
-  renderRoadmap(doc, state, callbacks);
-  renderMissables(doc, state, callbacks);
-  document.getElementById('missableCount').textContent = String(doc.trophies.filter((t) => t.missable).length);
-}
-
-const callbacks = {
-  onSelect(id) {
-    selectedId = id;
-    showView('tracker');
-    renderAll();
-    document.getElementById('detailPane').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+const actions = {
+  toggleEarned(id) {
+    if (state.earned.has(id)) state.earned.delete(id);
+    else state.earned.add(id);
+    saveEarned(state.earned);
+    render(state, actions);
   },
-  onToggle(id) {
-    toggleEarned(state, id);
-    renderAll();
-  },
-  onShowRoadmap() {
-    showView('roadmap');
+  select(id) {
+    state.selectedId = id;
+    render(state, actions);
   },
 };
 
-function showView(next) {
-  view = next;
-  document.getElementById('main').hidden = view !== 'tracker';
-  document.getElementById('toolbar').hidden = view !== 'tracker';
-  document.getElementById('roadmapPane').hidden = view !== 'roadmap';
-  document.getElementById('missablesPane').hidden = view !== 'missables';
-  for (const button of document.querySelectorAll('#tabs button')) {
-    button.classList.toggle('active', button.dataset.view === view);
-  }
+function wireToolbar() {
+  document.getElementById('search').addEventListener('input', (event) => {
+    state.search = event.target.value;
+    render(state, actions);
+  });
+  document.getElementById('kindFilter').addEventListener('change', (event) => {
+    state.kind = event.target.value;
+    render(state, actions);
+  });
+  document.getElementById('gradeFilter').addEventListener('change', (event) => {
+    state.grade = event.target.value;
+    render(state, actions);
+  });
+  document.getElementById('statusFilter').addEventListener('change', (event) => {
+    state.status = event.target.value;
+    render(state, actions);
+  });
+  const spoilerBox = document.getElementById('spoilerFree');
+  spoilerBox.checked = state.spoilerFree;
+  spoilerBox.addEventListener('change', (event) => {
+    state.spoilerFree = event.target.checked;
+    saveSpoilerFree(state.spoilerFree);
+    render(state, actions);
+  });
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    exportProgress(state.earned, state.spoilerFree);
+  });
+  document.getElementById('importFile').addEventListener('change', async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const imported = await importProgress(file);
+    if (imported) {
+      state.earned = imported.earned;
+      state.spoilerFree = imported.spoilerFree;
+      spoilerBox.checked = state.spoilerFree;
+      saveEarned(state.earned);
+      saveSpoilerFree(state.spoilerFree);
+      render(state, actions);
+    } else {
+      window.alert('That file is not a Vice Atlas progress export.');
+    }
+    event.target.value = '';
+  });
+  document.querySelectorAll('#tabs button').forEach((button) => {
+    button.addEventListener('click', () => {
+      state.view = button.dataset.view;
+      render(state, actions);
+    });
+  });
 }
 
-document.getElementById('tabs').addEventListener('click', (event) => {
-  const button = event.target.closest('button[data-view]');
-  if (button) showView(button.dataset.view);
-});
+async function boot() {
+  const response = await fetch('data/trophies.json');
+  state.data = await response.json();
+  // The missable pill counts the flagged trophies in the data, not a hard number.
+  document.getElementById('missableCount').textContent = String(
+    state.data.trophies.filter((t) => t.missable).length,
+  );
+  wireToolbar();
+  render(state, actions);
+}
 
-document.getElementById('search').addEventListener('input', (event) => {
-  filters.query = event.target.value;
-  renderAll();
-});
-document.getElementById('kind').addEventListener('change', (event) => {
-  filters.kind = event.target.value;
-  renderAll();
-});
-document.getElementById('grade').addEventListener('change', (event) => {
-  filters.grade = event.target.value;
-  renderAll();
-});
-document.getElementById('status').addEventListener('change', (event) => {
-  filters.status = event.target.value;
-  renderAll();
-});
-
-const spoilerBox = document.getElementById('spoiler');
-spoilerBox.checked = state.spoiler;
-spoilerBox.addEventListener('change', () => {
-  state.spoiler = spoilerBox.checked;
-  saveProgress(state);
-  renderAll();
-});
-
-document.getElementById('exportBtn').addEventListener('click', () => exportProgressFile(state));
-
-document.getElementById('importFile').addEventListener('change', async (event) => {
-  const file = event.target.files[0];
-  event.target.value = '';
-  if (!file) return;
-  try {
-    const imported = await importProgressFile(file, validIds);
-    state.earned = imported.earned;
-    state.spoiler = imported.spoiler;
-    spoilerBox.checked = state.spoiler;
-    saveProgress(state);
-    renderAll();
-  } catch (error) {
-    alert(`Could not import that file: ${error.message}`);
-  }
-});
-
-renderAll();
+boot();

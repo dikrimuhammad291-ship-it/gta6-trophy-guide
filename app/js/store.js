@@ -1,59 +1,85 @@
-// Progress store: the earned set and the spoiler setting live in localStorage,
-// and export/import moves them as a JSON file. Nothing leaves the browser unless
-// the reader exports it.
+// Vice Atlas — progress store: the earned set and the spoiler setting live in
+// localStorage, and progress can be exported to a JSON file and imported back.
+// Nothing leaves the browser except through the user's own export.
+const KEY = 'vice-atlas-progress-v1';
 
-export const STORAGE_KEY = 'gta6-trophy-guide-progress-v1';
-
-export function loadProgress() {
+function readRaw() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { earned: new Set(), spoiler: false };
-    const parsed = JSON.parse(raw);
-    const earned = new Set(Array.isArray(parsed.earned) ? parsed.earned.filter((id) => Number.isInteger(id)) : []);
-    return { earned, spoiler: parsed.spoiler === true };
+    const raw = window.localStorage.getItem(KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== 'object') return null;
+    return data;
   } catch {
-    return { earned: new Set(), spoiler: false };
+    return null;
   }
 }
 
-export function saveProgress(state) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    earned: [...state.earned].sort((a, b) => a - b),
-    spoiler: state.spoiler,
-  }));
+function writeRaw(data) {
+  try {
+    window.localStorage.setItem(KEY, JSON.stringify(data));
+  } catch {
+    // Storage full or blocked: the app keeps working in memory only.
+  }
 }
 
-export function toggleEarned(state, id) {
-  if (state.earned.has(id)) state.earned.delete(id);
-  else state.earned.add(id);
-  saveProgress(state);
+// The earned set, as an array of trophy ids the user has checked off.
+export function loadEarned() {
+  const data = readRaw();
+  const ids = Array.isArray(data?.earned) ? data.earned : [];
+  return new Set(ids.filter((id) => Number.isInteger(id)));
 }
 
-export function exportProgressFile(state) {
-  const payload = JSON.stringify({
-    app: 'leonida-ledger',
-    game: 'Grand Theft Auto VI',
-    exported_at: new Date().toISOString(),
-    earned: [...state.earned].sort((a, b) => a - b),
-    spoiler: state.spoiler,
-  }, null, 2);
-  const anchor = document.createElement('a');
-  anchor.href = URL.createObjectURL(new Blob([payload], { type: 'application/json' }));
-  anchor.download = 'gta6-trophy-progress.json';
-  anchor.click();
-  URL.revokeObjectURL(anchor.href);
+export function saveEarned(earned) {
+  const data = readRaw() ?? {};
+  data.earned = [...earned].sort((a, b) => a - b);
+  writeRaw(data);
 }
 
-// Reads an exported file back. Accepts our own format and the plain array of
-// ids the starter exported. Returns { earned, spoiler } or throws with a reason.
-export async function importProgressFile(file, validIds) {
+export function loadSpoilerFree() {
+  const data = readRaw();
+  return data?.spoilerFree === true;
+}
+
+export function saveSpoilerFree(on) {
+  const data = readRaw() ?? {};
+  data.spoilerFree = on;
+  writeRaw(data);
+}
+
+// Export: a small JSON file the user can keep or move to another browser.
+export function exportProgress(earned, spoilerFree) {
+  const payload = {
+    app: 'vice-atlas',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    earned: [...earned].sort((a, b) => a - b),
+    spoilerFree,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'vice-atlas-progress.json';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+// Import: read a file the user exported before; returns the earned set it held,
+// or null when the file is not a Vice Atlas export.
+export async function importProgress(file) {
   const text = await file.text();
-  const parsed = JSON.parse(text);
-  const ids = Array.isArray(parsed) ? parsed : parsed.earned;
-  if (!Array.isArray(ids)) throw new Error('That file holds no earned list.');
-  const earned = new Set();
-  for (const id of ids) {
-    if (Number.isInteger(id) && validIds.has(id)) earned.add(id);
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return null;
   }
-  return { earned, spoiler: parsed && parsed.spoiler === true };
+  if (!data || data.app !== 'vice-atlas' || !Array.isArray(data.earned)) return null;
+  return {
+    earned: new Set(data.earned.filter((id) => Number.isInteger(id))),
+    spoilerFree: data.spoilerFree === true,
+  };
 }

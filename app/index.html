@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Leonida Ledger — GTA VI Trophy Guide &amp; Tracker</title>
-<meta name="description" content="The offline guide and tracker for all 55 Grand Theft Auto VI PlayStation 5 trophies: checklist with saved progress, roadmap to the platinum, missables flagged, and a cited guide to each trophy.">
+<title>Vice Atlas — GTA VI Trophy Guide &amp; Tracker</title>
+<meta name="description" content="The offline guide and tracker for all 55 Grand Theft Auto VI PlayStation 5 trophies: a checklist with saved progress, a roadmap to the platinum, the missables flagged, and a cited guide to each trophy.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="masthead">
   <div class="brand">
-    <div class="mark" aria-hidden="true">L</div>
+    <div class="mark" aria-hidden="true">VA</div>
     <div>
-      <h1>Leonida Ledger</h1>
+      <h1>Vice Atlas</h1>
       <p class="tagline">The GTA VI trophy guide &amp; tracker — 55 trophies: 1 platinum, 2 gold, 6 silver, 46 bronze</p>
     </div>
   </div>
@@ -21,7 +21,7 @@
       <span id="progressText">0 of 55 earned</span>
       <span id="nextUp" class="next-up"></span>
     </div>
-    <div class="progress-bar" role="progressbar" aria-label="Trophies earned"><div id="progressFill"></div></div>
+    <div class="progress-bar" role="progressbar" aria-label="Trophies earned" aria-valuemin="0" aria-valuemax="55" aria-valuenow="0"><div id="progressFill"></div></div>
     <div class="grade-counts" id="gradeCounts"></div>
   </div>
 </header>
@@ -35,7 +35,7 @@
 <section class="toolbar" id="toolbar" aria-label="Filters and progress tools">
   <input id="search" type="search" placeholder="Search trophies…" aria-label="Search trophies">
   <label>Kind
-    <select id="kind" aria-label="Filter by kind">
+    <select id="kindFilter" aria-label="Filter by kind">
       <option value="all">All kinds</option>
       <option value="story">Story</option>
       <option value="mission">Missions</option>
@@ -48,7 +48,7 @@
     </select>
   </label>
   <label>Grade
-    <select id="grade" aria-label="Filter by grade">
+    <select id="gradeFilter" aria-label="Filter by grade">
       <option value="all">All grades</option>
       <option value="platinum">Platinum</option>
       <option value="gold">Gold</option>
@@ -57,38 +57,25 @@
     </select>
   </label>
   <label>Status
-    <select id="status" aria-label="Filter by status">
+    <select id="statusFilter" aria-label="Filter by status">
       <option value="all">All</option>
       <option value="earned">Earned</option>
-      <option value="remaining">Remaining</option>
-      <option value="missable">Missable only</option>
+      <option value="remaining">Still to earn</option>
     </select>
   </label>
-  <label class="toggle"><input id="spoiler" type="checkbox"> Spoiler-free</label>
-  <button id="exportBtn" type="button">Export progress</button>
-  <label class="import-btn">Import progress <input id="importFile" type="file" accept="application/json"></label>
+  <label class="check-label"><input id="spoilerFree" type="checkbox"> Spoiler-free <span class="hint">hides story trophies until earned</span></label>
+  <span class="toolbar-spacer"></span>
+  <button type="button" id="exportBtn">Export progress</button>
+  <label class="import-label">Import progress <input id="importFile" type="file" accept="application/json,.json"></label>
 </section>
 
-<main id="main">
-  <section id="listPane" class="list-pane" aria-label="Trophy list">
-    <p id="resultCount" class="result-count"></p>
-    <ul id="trophyList" class="trophy-list"></ul>
-    <p id="emptyNote" class="empty-note" hidden>No trophies match these filters.</p>
-  </section>
-  <aside id="detailPane" class="detail-pane" aria-label="Trophy guide"></aside>
+<main class="layout">
+  <section class="list-pane" id="listPane" aria-label="Trophy list"></section>
+  <aside class="detail-pane" id="detailPane" aria-label="Trophy guide"></aside>
 </main>
 
-<section id="roadmapPane" class="roadmap-pane" hidden aria-label="Roadmap to the platinum"></section>
-<section id="missablesPane" class="missables-pane" hidden aria-label="Missable trophies"></section>
-
-<footer class="colophon">
-  <p><strong>Sources.</strong> Trophy names, descriptions, grades and hidden flags follow the official list as published by
-  <a href="https://www.exophase.com/game/grand-theft-auto-vi-psn/trophies/">Exophase</a> and
-  <a href="https://psnprofiles.com/trophies/43531-grand-theft-auto-vi">PSNProfiles</a> on 18 November 2026, who agree on every name,
-  description and grade. Each trophy's guide is written for this entry from those official descriptions and is not yet checked
-  in the game — where the description does not pin a place or step down, the guide says so. This guide is an unofficial fan
-  work; it uses no Rockstar Games logo, artwork or game screenshot. It works fully offline: it loads only its own files and
-  makes no network request. Progress is saved in your browser (localStorage) and never leaves it except when you export it.</p>
+<footer class="foot">
+  <p>Names, descriptions and grades are PlayStation's own words, as listed by Exophase and PSNProfiles on 2026-11-18. Every guide is written for this entry from those descriptions — see Sources beside each guide. No Rockstar logo or official artwork. Works fully offline; progress lives in your browser only.</p>
 </footer>
 
 <script type="module" src="js/main.js"></script>
